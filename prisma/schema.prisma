@@ -1,0 +1,136 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String          @id @default(uuid())
+  email          String          @unique
+  passwordHash   String
+  name           String?
+  role           String          @default("user") // "user" or "admin"
+  isVerified     Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  profile        Profile?
+  contents       Content[]
+  analytics      Analytics[]
+  notifications  Notification[]
+  calendarEvents CalendarEvent[]
+  socialAccounts SocialAccount[]
+  aiReports      AIReport[]
+  settings       Settings?
+}
+
+model Profile {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profession       String
+  industry         String
+  niche            String
+  targetAudience   String
+  platforms        String   // comma-separated (e.g. "linkedin,x,youtube")
+  goals            String
+  postingFrequency String
+  preferredTone    String
+  brandScore       Int      @default(70)
+  brandSummary     String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Content {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String?
+  body           String
+  platform       String   // "linkedin" | "x" | "instagram" | "youtube" | "facebook"
+  status         String   // "DRAFT" | "SCHEDULED" | "PUBLISHED" | "FAILED"
+  scheduledFor   DateTime?
+  publishedAt    DateTime?
+  hashtags       String?
+  tone           String?
+  variations     String?  // JSON string storing alternate versions
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Analytics {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform       String   // "all" | "linkedin" | "x" | "youtube"
+  followers      Int      @default(0)
+  engagementRate Float    @default(0.0)
+  reach          Int      @default(0)
+  likes          Int      @default(0)
+  comments       Int      @default(0)
+  shares         Int      @default(0)
+  recordedAt     DateTime @default(now())
+}
+
+model CalendarEvent {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  type          String   // "meeting" | "event" | "hackathon" | "webinar" | "launch"
+  description   String?
+  startAt       DateTime
+  endAt         DateTime
+  suggestedIdea String?  // AI auto-generated content idea based on the event
+  createdAt     DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // "alert" | "system" | "ai"
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model SocialAccount {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform    String   // "linkedin" | "x" | "youtube"
+  username    String
+  avatarUrl   String?
+  isConnected Boolean  @default(true)
+  accessToken String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AIReport {
+  id                 String   @id @default(uuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type               String   // "weekly" | "monthly"
+  contentStrategy    String
+  growthSuggestions  String
+  trendingTopics     String
+  postingTimeSuggest String   // best posting times
+  createdAt          DateTime @default(now())
+}
+
+model Settings {
+  id               String   @id @default(uuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme            String   @default("dark")
+  language         String   @default("en")
+  emailUpcoming    Boolean  @default(true)
+  emailWeeklyReport Boolean  @default(true)
+  apiKeyOpenAI     String?
+}
